@@ -1,34 +1,31 @@
-import styled from 'styled-components';
 import React, { PropsWithChildren } from 'react';
 import Heading from 'components/common/heading/Heading.styled';
 
-interface Props {
+import * as S from './PageHeading.styled';
+
+interface PageHeadingProps {
   text: string;
-  className?: string;
+  backTo?: string;
+  backText?: string;
 }
 
-const PageHeading: React.FC<PropsWithChildren<Props>> = ({
+const PageHeading: React.FC<PropsWithChildren<PageHeadingProps>> = ({
   text,
-  className,
+  backTo,
+  backText,
   children,
 }) => {
+  const isBackButtonVisible = backTo && backText;
+
   return (
-    <div className={className}>
-      <Heading>{text}</Heading>
+    <S.Wrapper>
+      <S.Breadcrumbs>
+        {isBackButtonVisible && <S.BackLink to={backTo}>{backText}</S.BackLink>}
+        <Heading>{text}</Heading>
+      </S.Breadcrumbs>
       <div>{children}</div>
-    </div>
+    </S.Wrapper>
   );
 };
 
-export default styled(PageHeading)`
-  height: 56px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0px 16px;
-
-  & > div {
-    display: flex;
-    gap: 16px;
-  }
-`;
+export default PageHeading;

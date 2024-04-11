@@ -1,43 +1,6 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { TopicMessagesState, ClusterName, TopicName } from 'redux/interfaces';
-import { TopicMessage, Configuration, MessagesApi } from 'generated-sources';
-import { BASE_PARAMS } from 'lib/constants';
-import { getResponse } from 'lib/errorHandling';
-import { showSuccessAlert } from 'redux/reducers/alerts/alertsSlice';
-import { fetchTopicDetails } from 'redux/reducers/topics/topicsSlice';
-
-const apiClientConf = new Configuration(BASE_PARAMS);
-export const messagesApiClient = new MessagesApi(apiClientConf);
-
-export const clearTopicMessages = createAsyncThunk<
-  undefined,
-  { clusterName: ClusterName; topicName: TopicName; partitions?: number[] }
->(
-  'topicMessages/clearTopicMessages',
-  async (
-    { clusterName, topicName, partitions },
-    { rejectWithValue, dispatch }
-  ) => {
-    try {
-      await messagesApiClient.deleteTopicMessages({
-        clusterName,
-        topicName,
-        partitions,
-      });
-      dispatch(fetchTopicDetails({ clusterName, topicName }));
-      dispatch(
-        showSuccessAlert({
-          id: `message-${topicName}-${clusterName}-${partitions}`,
-          message: 'Messages successfully cleared!',
-        })
-      );
-
-      return undefined;
-    } catch (err) {
-      return rejectWithValue(await getResponse(err as Response));
-    }
-  }
-);
+import { createSlice } from '@reduxjs/toolkit';
+import { TopicMessagesState } from 'redux/interfaces';
+import { TopicMessage } from 'generated-sources';
 
 export const initialState: TopicMessagesState = {
   messages: [],
@@ -47,10 +10,11 @@ export const initialState: TopicMessagesState = {
     messagesConsumed: 0,
     isCancelled: false,
   },
+  messageEventType: '',
   isFetching: false,
 };
 
-export const topicMessagesSlice = createSlice({
+const topicMessagesSlice = createSlice({
   name: 'topicMessages',
   initialState,
   reducers: {
@@ -74,11 +38,10 @@ export const topicMessagesSlice = createSlice({
     setTopicMessagesFetchingStatus: (state, action) => {
       state.isFetching = action.payload;
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(clearTopicMessages.fulfilled, (state) => {
-      state.messages = [];
-    });
+
+    setMessageEventType: (state, action) => {
+      state.messageEventType = action.payload;
+    },
   },
 });
 
@@ -88,6 +51,7 @@ export const {
   updateTopicMessagesPhase,
   updateTopicMessagesMeta,
   setTopicMessagesFetchingStatus,
+  setMessageEventType,
 } = topicMessagesSlice.actions;
 
 export default topicMessagesSlice.reducer;
